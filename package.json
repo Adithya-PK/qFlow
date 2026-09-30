@@ -1,0 +1,18 @@
+{
+  "name": "qflow",
+  "version": "1.0.0",
+  "description": "QFlow — AI-Powered Smart Token & Queue Management System",
+  "private": true,
+  "scripts": {
+    "install-all": "cmd /c npm install && cmd /c npm install --prefix server && cmd /c npm install --prefix client",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "cmd /c npm run dev --prefix server",
+    "client": "cmd /c npm run dev --prefix client",
+    "seed": "cmd /c npm run seed --prefix server",
+    "generate-qr": "cmd /c npm run generate-qr --prefix server",
+    "start": "concurrently \"npm run start --prefix server\" \"npm run preview --prefix client\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}

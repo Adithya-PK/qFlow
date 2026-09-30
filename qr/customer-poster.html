@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>QFlow - Smart Queue Poster</title>
+  <style>
+    @page { size: A4 portrait; margin: 0; }
+    body {
+      margin: 0;
+      padding: 40px;
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #ffffff;
+      color: #0f172a;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 100vh;
+      text-align: center;
+    }
+    .header { margin-top: 10px; }
+    .brand { font-size: 54px; font-weight: 900; letter-spacing: 4px; color: #4f46e5; margin: 0; }
+    .subtitle { font-size: 26px; font-weight: 700; color: #64748b; letter-spacing: 2px; margin: 8px 0 0; }
+    .hero-box {
+      background: #f8fafc;
+      border: 3px solid #e2e8f0;
+      border-radius: 24px;
+      padding: 30px;
+      margin: 25px 0;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .join-title { font-size: 32px; font-weight: 800; color: #0f172a; margin: 0 0 16px; }
+    .qr-frame {
+      background: #ffffff;
+      padding: 16px;
+      border: 4px solid #4f46e5;
+      border-radius: 20px;
+      box-shadow: 0 8px 24px rgba(79, 70, 229, 0.15);
+    }
+    .qr-frame img { width: 340px; height: 340px; display: block; }
+    .scan-prompt { font-size: 24px; font-weight: 800; color: #4f46e5; margin: 18px 0 0; }
+    .steps-container {
+      width: 100%;
+      max-width: 500px;
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 18px 24px;
+      text-align: left;
+      margin-top: 20px;
+      border: 1px solid #e2e8f0;
+    }
+    .step { font-size: 17px; font-weight: 600; color: #334155; margin: 8px 0; display: flex; align-items: center; }
+    .step-num {
+      background: #4f46e5;
+      color: #ffffff;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 800;
+      margin-right: 12px;
+      flex-shrink: 0;
+    }
+    .footer {
+      margin-bottom: 10px;
+      border-top: 2px dashed #cbd5e1;
+      padding-top: 16px;
+      width: 100%;
+      max-width: 550px;
+    }
+    .wifi-notice { font-size: 15px; font-weight: 700; color: #b45309; background: #fef3c7; padding: 10px 16px; border-radius: 8px; display: inline-block; margin-bottom: 8px; }
+    .url-text { font-family: monospace; font-size: 14px; color: #64748b; margin: 4px 0 0; }
+    @media print {
+      body { padding: 30px; }
+      .hero-box { box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1 class="brand">QFLOW</h1>
+    <div class="subtitle">SMART QUEUE</div>
+  </div>
+
+  <div class="hero-box">
+    <div class="join-title">JOIN THE QUEUE</div>
+    <div class="qr-frame">
+      <img src="data:image/png;base64,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" alt="QFlow Customer QR Code">
+    </div>
+    <div class="scan-prompt">Scan to Get Your Token</div>
+
+    <div class="steps-container">
+      <div class="step"><span class="step-num">1</span> Scan the QR</div>
+      <div class="step"><span class="step-num">2</span> Enter Your Details</div>
+      <div class="step"><span class="step-num">3</span> Select Your Service</div>
+      <div class="step"><span class="step-num">4</span> Receive Your Token</div>
+      <div class="step"><span class="step-num">5</span> Track Your Queue Status</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="wifi-notice">Connect to the Service Center Wi-Fi before scanning.</div>
+    <div class="url-text">http://192.168.1.4:5173/customer</div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,173 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+  
+  body {
+    @apply bg-gray-950 text-gray-100 font-sans;
+    margin: 0;
+    padding: 0;
+  }
+
+  :root {
+    --qflow-primary: #6366f1;
+    --qflow-secondary: #8b5cf6;
+    --qflow-accent: #06b6d4;
+    --qflow-success: #10b981;
+    --qflow-warning: #f59e0b;
+    --qflow-danger: #ef4444;
+    --qflow-dark: #0f0f1a;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200 active:scale-95;
+  }
+  
+  .btn-secondary {
+    @apply bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200 active:scale-95;
+  }
+  
+  .btn-success {
+    @apply bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200 active:scale-95;
+  }
+  
+  .btn-danger {
+    @apply bg-red-600 hover:bg-red-500 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200 active:scale-95;
+  }
+  
+  .btn-warning {
+    @apply bg-amber-600 hover:bg-amber-500 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200 active:scale-95;
+  }
+  
+  .card {
+    @apply bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-lg;
+  }
+  
+  .badge-waiting {
+    @apply bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded-full text-xs font-semibold;
+  }
+  
+  .badge-called {
+    @apply bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded-full text-xs font-semibold;
+  }
+  
+  .badge-inservice {
+    @apply bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 px-2 py-0.5 rounded-full text-xs font-semibold;
+  }
+  
+  .badge-completed {
+    @apply bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full text-xs font-semibold;
+  }
+  
+  .badge-skipped {
+    @apply bg-gray-500/20 text-gray-400 border border-gray-500/30 px-2 py-0.5 rounded-full text-xs font-semibold;
+  }
+  
+  .badge-available {
+    @apply bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full text-xs font-semibold;
+  }
+  
+  .badge-offline {
+    @apply bg-gray-500/20 text-gray-400 border border-gray-500/30 px-2 py-0.5 rounded-full text-xs font-semibold;
+  }
+  
+  .form-input {
+    @apply w-full bg-gray-800 border border-gray-700 text-gray-100 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent placeholder-gray-500 transition-all;
+  }
+  
+  .form-label {
+    @apply block text-gray-400 text-sm font-medium mb-1.5;
+  }
+  
+  .stat-card {
+    @apply bg-gray-900 border border-gray-800 rounded-xl p-5 flex flex-col gap-2;
+  }
+
+  .sidebar-link {
+    @apply flex items-center gap-3 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-all duration-200 cursor-pointer;
+  }
+  
+  .sidebar-link.active {
+    @apply bg-indigo-600/20 text-indigo-400 border border-indigo-500/30;
+  }
+
+  /* Customer portal specific */
+  .token-number {
+    @apply text-8xl font-black text-indigo-400 tracking-wider;
+    text-shadow: 0 0 40px rgba(99, 102, 241, 0.5);
+  }
+  
+  .pulse-ring {
+    @apply absolute inset-0 rounded-full border-2 border-indigo-400 animate-ping opacity-30;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-900;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-700 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-600;
+}
+
+/* Animations */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.4s ease-out;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6, #06b6d4);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Glow effects */
+.glow-indigo {
+  box-shadow: 0 0 30px rgba(99, 102, 241, 0.3);
+}
+
+.glow-green {
+  box-shadow: 0 0 30px rgba(16, 185, 129, 0.3);
+}
+
+.glow-amber {
+  box-shadow: 0 0 30px rgba(245, 158, 11, 0.3);
+}
