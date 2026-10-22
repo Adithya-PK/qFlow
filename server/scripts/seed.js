@@ -153,28 +153,21 @@ async function seed() {
       console.log(`  ✓ Counter ${counter.counterNumber}: ${counter.staffName}`);
     }
 
-    // 4. Historical tokens — only create if fewer than 15 exist for today
-    console.log('\n[Seed] Seeding historical tokens...');
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const existingCount = await Token.countDocuments({ createdAt: { $gte: today } });
+    // 4. Historical tokens — clean reset to 15 standard demo records for analytics
+    console.log('\n[Seed] Resetting tokens to clean demo state...');
+    await Token.deleteMany({});
+    
+    // Ensure all counters are reset to AVAILABLE with no active token
+    await Counter.updateMany({}, { $set: { status: 'AVAILABLE', currentTokenId: null } });
 
-    if (existingCount < 15) {
-      const serviceNames = SERVICES.map((s) => s.name);
-      const historicalTokens = buildHistoricalTokens(seededCounters, serviceNames);
+    const serviceNames = SERVICES.map((s) => s.name);
+    const historicalTokens = buildHistoricalTokens(seededCounters, serviceNames);
 
-      for (const t of historicalTokens) {
-        await Token.findOneAndUpdate(
-          { tokenNumber: t.tokenNumber },
-          { $setOnInsert: t },
-          { upsert: true, new: true }
-        );
-        process.stdout.write(`  ✓ Token ${t.tokenNumber} `);
-      }
-      console.log('\n  Done.');
-    } else {
-      console.log(`  Skipped — ${existingCount} tokens already exist for today.`);
+    for (const t of historicalTokens) {
+      await Token.create(t);
+      process.stdout.write(`  ✓ Token ${t.tokenNumber} `);
     }
+    console.log('\n  Done.');
 
     console.log('\n========================================');
     console.log('  QFlow Seed Completed Successfully! ✓');
