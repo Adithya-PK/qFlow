@@ -23,7 +23,7 @@ echo Resetting active queue and restoring clean demo state...
 echo - Default Admin Account (admin@smartqueue.com / admin123)
 echo - 4 Active Service Counters (Counters 1-4)
 echo - 5 Standard Service Categories
-echo - 15 Historical Analytics Records
+echo - Clears all tokens (Queue starts fresh at Token A101)
 echo.
 
 call node server/scripts/seed.js

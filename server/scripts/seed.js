@@ -57,47 +57,6 @@ const COUNTERS = [
 ];
 
 // ---------------------------------------------------------------------------
-// Historical token generator
-// ---------------------------------------------------------------------------
-function buildHistoricalTokens(counters, serviceNames) {
-  const tokens = [];
-  const now = new Date();
-
-  // Spread 15 tokens across different hours today
-  for (let i = 0; i < 15; i++) {
-    const serviceName = serviceNames[i % serviceNames.length];
-    const counter = counters[i % counters.length];
-
-    const hoursAgo = 8 - Math.floor(i * 0.5); // spread from ~8hrs ago to ~0.5hrs ago
-    const createdAt = new Date(now.getTime() - hoursAgo * 60 * 60 * 1000);
-    const calledAt = new Date(createdAt.getTime() + (2 + Math.floor(Math.random() * 5)) * 60 * 1000);
-    const startedAt = new Date(calledAt.getTime() + 1 * 60 * 1000);
-    const actualDuration = 5 + Math.floor(Math.random() * 12); // 5-17 min
-    const completedAt = new Date(startedAt.getTime() + actualDuration * 60 * 1000);
-
-    const seq = 101 + i;
-    tokens.push({
-      tokenNumber: `A${seq}`,
-      customerName: `Customer ${seq}`,
-      phone: `98765${String(43210 + i).padStart(5, '0')}`,
-      service: serviceName,
-      status: 'COMPLETED',
-      createdAt,
-      calledAt,
-      startedAt,
-      completedAt,
-      counterId: counter._id,
-      predictedDuration: actualDuration + Math.floor(Math.random() * 3) - 1,
-      estimatedWait: 5 + Math.floor(Math.random() * 10),
-      peopleAhead: Math.floor(Math.random() * 8),
-      actualDuration,
-    });
-  }
-
-  return tokens;
-}
-
-// ---------------------------------------------------------------------------
 // Main seed function
 // ---------------------------------------------------------------------------
 async function seed() {
@@ -153,21 +112,13 @@ async function seed() {
       console.log(`  ✓ Counter ${counter.counterNumber}: ${counter.staffName}`);
     }
 
-    // 4. Historical tokens — clean reset to 15 standard demo records for analytics
-    console.log('\n[Seed] Resetting tokens to clean demo state...');
+    // 4. Reset queue to 100% clean state (Zero dummy customers)
+    console.log('\n[Seed] Clearing all tokens for a fresh, clean queue...');
     await Token.deleteMany({});
     
     // Ensure all counters are reset to AVAILABLE with no active token
     await Counter.updateMany({}, { $set: { status: 'AVAILABLE', currentTokenId: null } });
-
-    const serviceNames = SERVICES.map((s) => s.name);
-    const historicalTokens = buildHistoricalTokens(seededCounters, serviceNames);
-
-    for (const t of historicalTokens) {
-      await Token.create(t);
-      process.stdout.write(`  ✓ Token ${t.tokenNumber} `);
-    }
-    console.log('\n  Done.');
+    console.log('  ✓ All tokens cleared. Queue is 100% empty and ready for Token A101.');
 
     console.log('\n========================================');
     console.log('  QFlow Seed Completed Successfully! ✓');
