@@ -25,7 +25,9 @@ function getLanIP() {
   const candidates = [];
 
   for (const name of Object.keys(interfaces)) {
-    const isVirtual = /virtual|vbox|vmware|wsl|hyper-v|loopback|pseudo/i.test(name);
+    const isVirtual = /virtual|vbox|vmware|wsl|hyper-v|loopback|pseudo|docker|tailscale|zerotier/i.test(name);
+    const isWiFi = /wi-fi|wlan|wireless|airport|hotspot/i.test(name);
+
     for (const iface of interfaces[name]) {
       if (iface.family === 'IPv4' && !iface.internal) {
         const ip = iface.address;
@@ -38,9 +40,19 @@ function getLanIP() {
 
         if (isPrivate) {
           const isVboxDefault = ip.startsWith('192.168.56.');
+          let priority = 10;
+
+          if (isVirtual || isVboxDefault) {
+            priority = 1;
+          } else if (isWiFi) {
+            // Wi-Fi / Hotspot has the absolute highest priority for mobile QR scanning
+            priority = 20;
+          }
+
           candidates.push({
+            name,
             ip,
-            priority: (isVirtual || isVboxDefault) ? 1 : 10,
+            priority,
           });
         }
       }

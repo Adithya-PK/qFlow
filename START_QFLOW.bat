@@ -1,7 +1,10 @@
 @echo off
+setlocal EnableDelayedExpansion
 title QFlow - AI-Powered Smart Queue Management System
 color 0A
 cls
+
+cd /d "%~dp0"
 
 echo ==========================================================
 echo        QFLOW: SMART TOKEN & QUEUE MANAGEMENT SYSTEM       
@@ -19,13 +22,23 @@ if %errorlevel% neq 0 (
     exit /b
 )
 
-echo [1/3] Detecting network configuration...
-for /f "tokens=4" %%a in ('route print 0.0.0.0 2^>nul ^| findstr "0.0.0.0"') do (
-    set LOCAL_IP=%%a
-    goto :ip_found
-)
-:ip_found
+:: Step 1: Detect active Wi-Fi / Hotspot IP
+echo [1/4] Detecting active network configuration...
+for /f "delims=" %%i in ('node scripts/print_ip.js') do set LOCAL_IP=%%i
 if "%LOCAL_IP%"=="" set LOCAL_IP=127.0.0.1
+
+:: Step 2: Auto-refresh QR code for detected IP
+echo [2/4] Ensuring QR code matches active network (%LOCAL_IP%)...
+call node server/scripts/generateQR.js >nul 2>nul
+
+:: Step 3: Prevent Port Conflicts (frees ports 5000 and 5173 if hanging)
+echo [3/4] Checking ports 5000 and 5173...
+netstat -ano | findstr :5000 >nul 2>nul
+if %errorlevel% equ 0 (
+    echo [INFO] Freeing existing server process to ensure clean startup...
+    taskkill /F /IM node.exe >nul 2>nul
+    timeout /t 1 /nobreak >nul
+)
 
 echo.
 echo ==========================================================
@@ -35,13 +48,13 @@ echo   Backend Server:              http://localhost:5000
 echo   Staff Login:                 admin@smartqueue.com / admin123
 echo ==========================================================
 echo.
-echo [2/3] Starting Express Backend & Vite Frontend...
+echo [4/4] Starting Express Backend & Vite Frontend...
 echo.
 
-:: Automatically launch browser after 4 seconds in background
+:: Automatically launch browser after 4 seconds
 start "" cmd /c "timeout /t 4 /nobreak >nul && start http://localhost:5173/"
 
-:: Launch full development server
+:: Launch full development server (runs both backend and frontend concurrently)
 call npm run dev
 
 pause

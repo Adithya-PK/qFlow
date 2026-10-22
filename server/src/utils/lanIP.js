@@ -1,7 +1,8 @@
 const os = require('os');
 
 /**
- * Detects the machine's LAN IP address (192.168.x.x, 10.x.x.x, or 172.16-31.x.x).
+ * Detects the machine's active LAN IP address (192.168.x.x, 10.x.x.x, or 172.16-31.x.x).
+ * Prioritizes Wi-Fi / Hotspot interfaces, then physical Ethernet, and deprioritizes virtual adapters.
  * Falls back to 127.0.0.1 if none found.
  */
 function getLanIP() {
@@ -9,7 +10,9 @@ function getLanIP() {
   const candidates = [];
 
   for (const name of Object.keys(interfaces)) {
-    const isVirtual = /virtual|vbox|vmware|wsl|hyper-v|loopback|pseudo/i.test(name);
+    const isVirtual = /virtual|vbox|vmware|wsl|hyper-v|loopback|pseudo|docker|tailscale|zerotier/i.test(name);
+    const isWiFi = /wi-fi|wlan|wireless|airport|hotspot/i.test(name);
+
     for (const iface of interfaces[name]) {
       if (iface.family === 'IPv4' && !iface.internal) {
         const ip = iface.address;
@@ -21,18 +24,27 @@ function getLanIP() {
             parseInt(ip.split('.')[1], 10) <= 31);
 
         if (isPrivate) {
-          // Exclude typical VirtualBox default network (192.168.56.x) from priority candidates
           const isVboxDefault = ip.startsWith('192.168.56.');
+          let priority = 10;
+
+          if (isVirtual || isVboxDefault) {
+            priority = 1;
+          } else if (isWiFi) {
+            // Wi-Fi / Hotspot has the absolute highest priority for mobile QR scanning
+            priority = 20;
+          }
+
           candidates.push({
+            name,
             ip,
-            priority: (isVirtual || isVboxDefault) ? 1 : 10,
+            priority,
           });
         }
       }
     }
   }
 
-  // Pick highest priority IP (physical Wi-Fi/LAN first)
+  // Pick highest priority IP (Wi-Fi/Hotspot first, then physical LAN, virtual last)
   if (candidates.length > 0) {
     candidates.sort((a, b) => b.priority - a.priority);
     return candidates[0].ip;
