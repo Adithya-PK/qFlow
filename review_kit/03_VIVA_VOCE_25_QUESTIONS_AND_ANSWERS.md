@@ -1,143 +1,114 @@
-# 🎓 25 Essential Viva-Voce Questions & Master Answers
+# 🎓 25 Simple & Punchy Viva Questions & Answers
 **Department of AI & DS | Easwari Engineering College**  
 **Student:** Adithya P K (310624243009) | **Project:** QFlow
 
 ---
 
-### 1. What does the MERN stack stand for and why did you choose it over Django or Spring Boot?
+### 1. What is the MERN stack and why did you use it?
 > **Answer:**  
-> MERN stands for **MongoDB, Express.js, React 19, and Node.js**. We chose it because it is an entirely **JavaScript-driven stack**. Data travels end-to-end as native JSON without object-relational mapping impedance. Furthermore, Node.js uses an asynchronous, single-threaded event loop that handles thousands of concurrent WebSocket connections (via Socket.IO) with significantly lower memory usage than thread-per-request frameworks like Django or Spring.
+> MERN stands for **MongoDB, Express.js, React 19, and Node.js**. We used it because the entire project is built using **one language: JavaScript**. Data moves smoothly between the phone, server, and database as simple JSON without needing complex conversions.
 
-### 2. Why did you use MongoDB instead of a relational database like MySQL or PostgreSQL?
+### 2. Why did you choose MongoDB instead of SQL (MySQL/PostgreSQL)?
 > **Answer:**  
-> Queue management requires high-velocity writes and status transitions (waiting $\rightarrow$ called $\rightarrow$ in-service $\rightarrow$ completed). MongoDB's WiredTiger storage engine excels at rapid in-memory writes. Moreover, tokens store dynamic arrays like `transferHistory` and AI prediction metadata, which map naturally into flexible BSON documents without expensive SQL joins.
+> MongoDB stores tokens as simple JSON documents. It is super fast for saving and updating token statuses, and we don't have to join multiple complex SQL tables every time a customer moves in line.
 
-### 3. What does Socket.IO do in your project, and how does it differ from traditional HTTP polling?
+### 3. What does Socket.IO do in your project?
 > **Answer:**  
-> Socket.IO maintains a persistent, full-duplex TCP connection between clients and the server. In HTTP polling, 50 phones querying every 2 seconds generate 1,500 HTTP requests per minute, creating server congestion and draining mobile batteries. Socket.IO eliminates this by pushing updates from the server to clients in **sub-50 millisecond latency** using tiny payloads ($<100\text{ bytes}$) only when events occur.
+> Socket.IO creates an instant live connection between the phone and the server. Instead of the phone constantly asking the server *"Is it my turn yet?"* every 2 seconds, the server pushes the alert the exact millisecond the staff clicks "Call".
 
-### 4. How do Socket.IO Rooms work in QFlow?
+### 4. How does the customer's phone vibrate when called?
 > **Answer:**  
-> Socket.IO multiplexes events into specific virtual channels:
-> - **The `queue` room:** Joined by staff monitors and display screens to receive global queue events (`tokenCreated`, `counterUpdated`, `analyticsUpdated`).
-> - **Private `token:{tokenId}` rooms:** When a customer receives Token A101, their mobile browser joins `token:A101`. When staff calls Token A101, the server emits `yourTurn` **only** to that room, preventing other customers from receiving false alerts.
+> When the phone receives the "yourTurn" alert from Socket.IO, our React code triggers the browser's built-in **Web Vibration API** (`navigator.vibrate`), which physically pulses the phone in the customer's pocket.
 
-### 5. What exact AI model is used? Is it a deep learning neural network?
+### 5. What does the AI model do in your project?
 > **Answer:**  
-> It is **not** a deep neural network, by deliberate engineering design. Deep learning models add 100ms+ inference latency, require expensive GPU servers, and lack explainability.  
-> Instead, QFlow uses a **calibrated weighted-average regression heuristic with temporal peak multipliers**, baseline-calibrated on 500 synthetic historical transactions generated via a seeded Mulberry32 pseudo-random distribution. This executes in **sub-millisecond time ($<1\text{ms}$)** and provides 100% operational transparency.
+> Our AI has **two simple jobs**:
+> 1. It calculates **how long the customer has to wait** based on the service type, peak hours, and people ahead.
+> 2. It **recommends the best counter** by scoring open desks from 0 to 100 so customers are routed to the freest teller.
 
-### 6. Can you state the mathematical formula for service duration prediction?
+### 6. Why did you use this lightweight AI instead of Deep Learning?
 > **Answer:**  
-> The predicted duration is calculated as:
-> $$D_{predicted} = \max\left(1, \operatorname{round}\left(\bar{D}_{base} + \Delta_{peak} + (Q_{ahead} \times 0.05)\right)\right)$$
-> Where:
-> - $\bar{D}_{base}$ is the weighted average duration of historical records for that service (matching hours receive $2\times$ weight, other hours $1\times$).
-> - $\Delta_{peak} = 1.5\text{ minutes}$ during peak operational hours (9–11 AM and 2–4 PM).
-> - $Q_{ahead} \times 0.05$ accounts for queue length and teller fatigue.
+> Deep learning models are slow (taking 100ms+ to run), require expensive GPU servers, and are hard to explain. Our formula runs in less than 1 millisecond on any computer and gives clear, understandable reasons for every recommendation.
 
-### 7. How is the customer's live estimated waiting time derived?
+### 7. How does the AI calculate estimated waiting time?
 > **Answer:**  
-> The system sums the remaining time for all currently serving tokens plus the estimated durations of all waiting tokens ahead, and divides this aggregate facility workload by the number of active, non-offline counters ($C_{active}$):
-> $$T_{wait} = \max\left(0, \operatorname{round}\left(\frac{W_{total}}{C_{active}}\right)\right)$$
+> It takes the base service time (like 8 mins for Account Service), adds 1.5 extra minutes if it is a busy peak hour (like 10 AM or 2 PM), adds a small buffer for people in line, and divides the total time by the number of active open counters.
 
-### 8. How does the Dynamic Heuristic Counter Recommendation algorithm work?
+### 8. How does the counter recommendation scoring work?
 > **Answer:**  
-> Every open, non-offline counter receives a real-time score between 0 and 100:
-> - **Available with No Token:** 100 points (highest priority)
-> - **Available (general):** 80 points
-> - **Calling a customer:** 50 points
-> - **In-Service:** 30 points
-> - **Deductions:** $-5\text{ points}$ per assigned waiting token, and $-2\text{ points}$ per minute of remaining service time.  
-> The desk with the highest score is recommended with an explainable reason code.
+> It scores every open counter from 0 to 100:
+> - A free counter with no customer gets **100 points** (recommended first).
+> - A counter currently calling someone gets **50 points**.
+> - A busy counter currently serving someone gets **30 points** minus points for minutes left.  
+> The counter with the highest score is automatically recommended.
 
-### 9. What happens if two staff members click "Call Next" at the exact same millisecond?
+### 9. What happens if two staff members click "Call Next" at the exact same time?
 > **Answer:**  
-> We prevent race conditions using MongoDB's atomic document update:
-> ```javascript
-> const token = await Token.findOneAndUpdate(
->   { _id: req.params.id, status: 'WAITING' },
->   { status: 'CALLED', calledAt: new Date(), counterId: counter._id },
->   { new: true }
-> );
-> ```
-> MongoDB's single-document write lock ensures only the first operation modifies the document. The second concurrent query finds zero matching documents with `status: 'WAITING'`, returns `null`, and safely responds with an HTTP 409 Conflict.
+> We use MongoDB's atomic update (`findOneAndUpdate`). It checks if the token status is `'WAITING'`. The first click claims the token and turns it to `'CALLED'`. The second click sees it is no longer waiting and safely stops. Two staff can never call the same person.
 
-### 10. How does the customer's phone vibrate when their turn comes?
+### 10. Why don't customers need to download an app or register an account?
 > **Answer:**  
-> When the mobile browser receives the `yourTurn` socket event, it triggers the HTML5 **Web Vibration API**:
-> ```javascript
-> if ('vibrate' in navigator) {
->   navigator.vibrate([300, 100, 300, 100, 500]);
-> }
-> ```
-> This vibrates the physical device while popping up an on-screen visual alert.
+> Downloading an 80MB app or filling out a registration form just to get a token wastes customer time and creates lobby crowds. Customers just scan the QR code and use their normal phone browser (Safari or Chrome).
 
-### 11. Why do customers not need to install an app or register an account?
+### 11. How do staff and administrators log in securely?
 > **Answer:**  
-> Queue tokens are transient, ephemeral tickets. Forcing visitors at a bank or hospital to download an 80MB native app and create an account creates massive friction and lobby delays. By running as a responsive web app on the mobile browser and generating a secure, token-specific URL (`/customer/status/:id`), visitors enjoy instant access with full privacy.
+> Staff log in using an email and password. Passwords are encrypted using **bcrypt**, and the server returns a signed **JWT (JSON Web Token)** that protects all staff operations.
 
-### 12. How does authentication and route security work for staff?
+### 12. What is React Context (`useContext`) and why did you use it?
 > **Answer:**  
-> Staff authenticate using email and password. Passwords are encrypted using **bcrypt** with 10 salt rounds. Upon successful verification, the server issues a signed **JSON Web Token (JWT)** containing the user's ID and role (`staff` or `admin`). An Express middleware (`auth.js`) intercepts all administrative endpoints and validates the `Bearer <token>` header.
+> React Context lets our screens share data (like user login status and the live queue list) across all pages easily, without having to pass data manually through every single component.
 
-### 13. What is the role of React Context (`useContext`) in the frontend?
+### 13. What is Vite and why is it better than older tools like Create React App?
 > **Answer:**  
-> We use `AuthContext` to share user login tokens and `QueueContext` to maintain the live active queue array and WebSocket subscriptions. This makes real-time queue states available across all pages (Dashboard, Queue List, Analytics) without prop-drilling or external Redux boilerplate.
+> Vite starts up almost instantly (under 300ms) and updates changes in milliseconds using modern browser modules, whereas older tools like Webpack take a long time to bundle the code.
 
-### 14. What is Vite and why is it superior to Webpack?
+### 14. How does the phone know your laptop's IP address when scanning the QR code?
 > **Answer:**  
-> Vite leverages native browser ES Modules (ESM) and compiles modules on-demand using `esbuild` (written in Go). Unlike Webpack which bundles the entire codebase before serving, Vite starts the dev server in under 300ms and provides instant Hot Module Replacement (HMR).
+> Our backend automatically checks the laptop's Wi-Fi adapter using Node's `os.networkInterfaces()`, filters out virtual network adapters, and puts the real Wi-Fi IP address directly into the QR code.
 
-### 15. How does the QR code dynamically encode the laptop's Wi-Fi IP address?
+### 15. What happens if the customer's phone screen turns off or sleeps?
 > **Answer:**  
-> In `lanIP.js`, Node's `os.networkInterfaces()` inspects all network adapters, filters out loopbacks (`127.0.0.1`) and virtual subnets (VirtualBox `192.168.56.x`, WSL, VMware), and picks the active physical Wi-Fi adapter IPv4 address. This IP is automatically embedded into the generated QR code.
+> When the phone screen turns off, the browser temporarily pauses the live connection. The moment the customer turns their screen back on, our code automatically reconnects and fetches the latest token status immediately.
 
-### 16. What happens if a customer's phone screen turns off or locks?
+### 16. What is the Token Transfer feature for?
 > **Answer:**  
-> Mobile operating systems pause WebSockets when the screen sleeps. In `QueueContext.jsx`, we attached a socket `reconnect` event listener. The moment the phone wakes up and the socket reconnects, it immediately fetches the latest token state from `/api/tokens/:id`, ensuring the screen is always accurate.
+> If a customer at Counter 1 needs document verification at Counter 3, the staff can click **Transfer**. Counter 1 becomes free, Counter 3 receives the customer with priority, and the customer's phone updates without them needing to re-queue at the door.
 
-### 17. What is the Token Transfer feature and why is it necessary?
+### 17. What happens if a customer doesn't show up when called?
 > **Answer:**  
-> If a customer at Counter 1 requires a different specialized department (e.g. loan document verification at Counter 3), staff click **Transfer**. Counter 1 is freed, the token is assigned to Counter 3 with priority, and the customer's phone updates instantly without forcing them to re-queue at the front door.
+> The staff clicks **"Skip Token"**. The token is marked as `SKIPPED`, the counter is freed to take the next person, and the line keeps moving without delay.
 
-### 18. What happens if a customer does not show up when called?
+### 18. What are the 6 token statuses in your system?
 > **Answer:**  
-> Staff click **"Skip Token"**. The token's status changes to `'SKIPPED'`, recording a timestamp. The counter resets to `'AVAILABLE'`, and the next waiting customer moves up without stalling the desk.
+> Normal flow: `WAITING` $\rightarrow$ `CALLED` $\rightarrow$ `IN_SERVICE` $\rightarrow$ `COMPLETED`.  
+> Special cases: `SKIPPED` (customer missed turn) and `TRANSFERRED` (moved to another counter).
 
 ### 19. How are the charts in the Analytics page generated?
 > **Answer:**  
-> MongoDB runs native aggregation pipelines (`$match`, `$group`, `$avg`) over completed tokens to compute hourly customer volume, average wait time per service category, and counter throughput. Recharts renders these aggregations into interactive SVG curves.
+> MongoDB runs built-in aggregation queries that calculate the average wait time, average service duration, and hourly customer volume from completed tokens, and Recharts draws the graphs.
 
-### 20. What is `MongoMemoryServer` and why is it included in your project?
+### 20. What is `MongoMemoryServer` and why did you include it?
 > **Answer:**  
-> It is an embedded, zero-config in-memory MongoDB instance. If local MongoDB is not installed or the service stops running during a live demonstration, QFlow automatically boots `MongoMemoryServer` and runs `seed.js`, guaranteeing 100% demo uptime without manual configuration.
+> It is an embedded, in-memory MongoDB fallback. If MongoDB is not installed or running on a presentation laptop, our server starts this temporary in-memory database automatically, ensuring our demo never fails.
 
-### 21. What metrics would you use to evaluate your AI model's accuracy?
+### 21. How do you measure the accuracy of your AI predictions?
 > **Answer:**  
-> 1. **MAE (Mean Absolute Error):** Measures average absolute deviation between predicted and actual minutes (Goal: within $\pm 1.5\text{ mins}$).  
-> 2. **RMSE (Root Mean Squared Error):** Penalizes large estimation errors.  
-> 3. **$R^2$ Score:** Measures how well temporal peak multipliers explain real wait-time variance.  
-> 4. **Counter Utilization Variance:** Measures whether workload is balanced evenly across counters.
+> We use **MAE (Mean Absolute Error)** to check how close our predicted minutes are to the real time (our goal is within 1 to 2 minutes), and **$R^2$ score** to verify that our peak-hour adjustments follow real customer traffic patterns.
 
-### 22. What are the 6 possible statuses of a token in QFlow?
+### 22. What happens if the college Wi-Fi doesn't allow cross-device connection?
 > **Answer:**  
-> 1. `WAITING` $\rightarrow$ 2. `CALLED` $\rightarrow$ 3. `IN_SERVICE` $\rightarrow$ 4. `COMPLETED`  
-> Edge statuses: `SKIPPED` (customer absent) and `TRANSFERRED` (moved to another counter).
+> We switch to a mobile phone hotspot, which puts the phone and laptop on the exact same private network with zero restrictions. Or, we can run the demo in a split-screen dual window on the laptop with zero Wi-Fi required.
 
-### 23. What is the difference between a PUT and a PATCH request in your API?
+### 23. What is the difference between an Express route and a Socket event?
 > **Answer:**  
-> `PUT` replaces an entire document. In QFlow, we use `PATCH` for state transitions (`/api/tokens/:id/call`, `/api/tokens/:id/start`, `/api/tokens/:id/complete`) because we are only modifying specific attributes (`status`, `calledAt`, `counterId`) without touching customer registration data.
+> An Express route (`POST /api/tokens`) is a one-time request sent from client to server. A Socket event (`tokenCalled`) is an instant push message sent from the server to all connected screens simultaneously.
 
-### 24. What are the main limitations of your system today?
+### 24. What are the main limitations of your project today?
 > **Answer:**  
-> 1. Devices must be on the same local subnet unless an external tunnel or public IP is used.  
-> 2. Duration modeling uses a synthetic baseline rather than months of live production data.  
-> 3. Mobile browser tab must remain in memory for vibration alerts to fire.
+> Currently, the customer's phone and laptop must be on the same local network, and turn alerts require the browser tab to remain open in the background.
 
-### 25. What future enhancements are planned for QFlow?
+### 25. What future enhancements are you planning?
 > **Answer:**  
-> 1. Public Waiting Lounge TV Monitor with multi-lingual Text-to-Speech (TTS) voice announcements.  
-> 2. Cellular SMS and WhatsApp gateway notifications via Twilio for customers who leave Wi-Fi range.  
-> 3. Transitioning the prediction engine to an XGBoost regressor trained on real facility data.  
-> 4. Multi-tenant multi-branch cloud deployment with Docker and Kubernetes.
+> 1. A full-screen Waiting Room TV display with spoken voice announcements (*"Token A101, please proceed to Counter 2"*).  
+> 2. SMS and WhatsApp alerts so customers can receive notifications even if they close their browser.  
+> 3. Cloud deployment using Docker.

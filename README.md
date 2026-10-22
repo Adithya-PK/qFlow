@@ -24,23 +24,41 @@
 
 ---
 
-## 🏗️ Architecture
+## 🏗️ Architecture & The MERN Stack
+
+QFlow uses the modern **MERN stack** paired with **Socket.IO** for seamless real-time coordination:
+
+- 🍃 **M — MongoDB:** Stores tokens, counters, staff accounts, and queue logs as flexible JSON documents without complex SQL table joins.
+- ⚡ **E — Express.js:** Backend web framework organizing clean REST API routes (`/api/tokens`, `/api/counters`, `/api/auth`).
+- ⚛️ **R — React 19 + Vite:** Component-based frontend delivering instant live updates on mobile and desktop without reloading the browser.
+- 🟢 **N — Node.js:** High-performance JavaScript runtime handling concurrent customer connections smoothly.
+- 📡 **+ Socket.IO:** Real-time WebSocket connection that pushes turn alerts and haptic device vibration the millisecond staff clicks "Call".
 
 ```
-Customer Phone (same Wi-Fi)
-        │
-        │ HTTP + Socket.IO
-        ▼
-React/Vite Frontend (port 5173)
-        │
-        │ REST API + Socket.IO
-        ▼
-Node/Express Backend (port 5000)
-        │
-        ├── Socket.IO (real-time broadcast)
-        ├── JWT Auth
-        ├── AI Prediction Service
-        └── MongoDB (source of truth)
+Customer Phone (Mobile Browser)              Staff Operator (Laptop Chrome)
+         │                                                 │
+         │ HTTP / Socket.IO                                │ HTTP / Socket.IO
+         ▼                                                 ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                   React 19 + Vite Frontend (Port 5173)                 │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │ Proxied REST + WebSockets
+                                    ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                   Node.js + Express Server (Port 5000)                 │
+│  - JWT Authentication & Route Guards                                   │
+│  - Socket.IO Multi-Room Broadcaster                                    │
+│  - AI Service Duration & Wait-Time Prediction                          │
+│  - Dynamic 100-Point Counter Scorer & Workload Balancer                │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │ Mongoose ODM
+                                    ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                            MongoDB Database                            │
+│  - Collections: tokens, counters, services, users                      │
+│  - Concurrency: Atomic findOneAndUpdate prevents race conditions       │
+│  - Resilient Fallback: Embedded MongoMemoryServer for offline demos    │
+└────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Real-Time Flow
