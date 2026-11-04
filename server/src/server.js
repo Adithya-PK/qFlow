@@ -61,6 +61,8 @@ app.use('/api/services', serviceRoutes);
 app.use('/api/queue', queueRoutes);
 app.use('/api/analytics', analyticsRoutes);
 
+app.get('/healthz', (_req, res) => res.status(200).send('OK'));
+
 app.get('/api/health', (req, res) => {
   const lanIP = getLanIP();
   const host = req.get('host');
