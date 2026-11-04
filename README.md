@@ -123,8 +123,10 @@ QFlow/
 │   ├── customer-qr.svg
 │   └── customer-qr-print.png
 │
-├── package.json               # Root scripts (concurrently)
+├── package.json               # Root scripts (cross-platform build & start)
+├── render.yaml                # Render Blueprint (Infrastructure as Code)
 ├── .env.example
+├── .env.production.example    # Production environment variables guide
 └── README.md
 ```
 
@@ -249,7 +251,51 @@ Terminal will show:
 
 ---
 
-## 📱 LAN / Phone Setup
+## 🌐 Free Cloud Deployment (Render + MongoDB Atlas)
+
+QFlow is pre-configured for **100% Free, zero-maintenance cloud hosting** on Render with MongoDB Atlas. When deployed to the cloud, QFlow operates as a **unified single-service stack**: the Node.js/Express backend serves the compiled React SPA, handles REST API endpoints, and runs real-time Socket.IO WebSockets under a single public HTTPS URL with **zero CORS issues**.
+
+### 🌟 Cloud Benefits
+- 🌍 **Global Phone QR Scanning**: Anyone on any mobile network (4G/5G) or Wi-Fi anywhere in the world can scan the live QR code and book tokens — no shared Wi-Fi requirement!
+- ⚡ **Unified Single Origin**: The React frontend and Express backend share the same domain (`https://<your-app>.onrender.com`), eliminating CORS errors.
+- 🔄 **Auto-Database Seeding**: On first boot against an empty MongoDB Atlas database, QFlow automatically seeds initial demo services, counters, and admin accounts.
+- 📦 **Infrastructure as Code**: The included [`render.yaml`](./render.yaml) automatically configures build and start commands.
+
+### 🚀 Step-by-Step Deployment Guide
+
+#### Step 1: Set Up Free Cloud Database (MongoDB Atlas)
+1. Sign up for a free account at [MongoDB Atlas](https://www.mongodb.com/cloud/atlas/register).
+2. Create an **M0 Free Cluster** (Shared, 512 MB storage — free forever, no credit card required).
+3. Under **Security Quickstart**:
+   - Create a database user (e.g., username `qflow_admin` and set a secure password).
+   - In **IP Access List**, select **"Allow Access from Anywhere"** (`0.0.0.0/0`) so Render cloud servers can connect.
+4. Click **Create Deployment** → Click **Connect** → Choose **Drivers** (Node.js).
+5. Copy your connection string:
+   ```text
+   mongodb+srv://<username>:<password>@cluster0.xxxxx.mongodb.net/qflow?retryWrites=true&w=majority
+   ```
+
+#### Step 2: Deploy Free on Render
+1. Sign up or log in at [Render.com](https://dashboard.render.com/) with GitHub.
+2. Click **New +** → **Web Service** → Select your repository (`Adithya-PK/qFlow`).
+3. Fill in the service settings:
+   - **Name**: `qflow` (or any unique name)
+   - **Language / Runtime**: `Node`
+   - **Branch**: `main`
+   - **Root Directory**: *(Leave empty)*
+   - **Build Command**: `npm run build`
+   - **Start Command**: `node server/src/server.js`
+   - **Instance Type**: **Free** ($0/month)
+4. Under **Environment Variables**, add:
+   | Key | Value | Notes |
+   |:---|:---|:---|
+   | `NODE_ENV` | `production` | Enables production static file serving & caching |
+   | `MONGODB_URI` | `mongodb+srv://...` | Your MongoDB Atlas connection URI from Step 1 |
+   | `JWT_SECRET` | *(any 32+ character secret string)* | Signs authentication tokens |
+5. Click **Deploy Web Service**.
+6. Once deployment finishes (Status: **Deploy succeeded | Live**), Render provides your live URL (e.g., `https://qflow.onrender.com`).
+
+---
 
 ### On the Laptop
 Both services must bind to `0.0.0.0` (not just localhost):
@@ -329,15 +375,23 @@ Print `qr/customer-qr-print.png` or display it on screen.
 
 ---
 
-## 🔗 URLs
+## 🔗 URLs & Access Points
 
-| URL | Description |
-|-----|-------------|
-| `http://localhost:5173` | Staff dashboard (laptop) |
-| `http://localhost:5173/customer` | Customer portal (localhost) |
-| `http://<LAN-IP>:5173/customer` | Customer portal (phone) |
-| `http://localhost:5000/api/health` | Backend health check |
-| `http://localhost:5173/login` | Login page |
+### Cloud Deployment (Production)
+| Endpoint | URL | Description |
+|---|---|---|
+| Staff Dashboard | `https://<your-app>.onrender.com/` | Real-time queue management (laptop/desktop) |
+| Customer Portal | `https://<your-app>.onrender.com/customer` | Digital token booking (scanned via phone QR) |
+| Health Check | `https://<your-app>.onrender.com/healthz` | Render uptime monitoring |
+| API Health | `https://<your-app>.onrender.com/api/health` | Diagnostic details & host metadata |
+
+### Local Development (LAN)
+| Endpoint | URL | Description |
+|---|---|---|
+| Staff Dashboard | `http://localhost:5173` | Staff dashboard on local machine |
+| Customer Portal | `http://localhost:5173/customer` | Customer portal (localhost) |
+| Mobile LAN Portal | `http://<LAN-IP>:5173/customer` | Customer portal for phones on same Wi-Fi |
+| Backend Health | `http://localhost:5000/api/health` | Backend status and detected LAN IP |
 
 ---
 
@@ -472,13 +526,15 @@ Invalid transitions are blocked by the backend.
 ## 🔧 NPM Scripts
 
 | Command | Description |
-|---------|-------------|
-| `npm run install-all` | Install all dependencies |
-| `npm run dev` | Start frontend + backend (concurrently) |
-| `npm run server` | Start backend only |
-| `npm run client` | Start frontend only |
-| `npm run seed` | Seed MongoDB with demo data |
-| `npm run generate-qr` | Generate QR codes |
+|---|---|
+| `npm run build` | **Production Build**: Installs dependencies and builds the Vite frontend |
+| `npm start` | **Production Start**: Boots the Express server with static frontend serving |
+| `npm run install-all` | Install all dependencies across root, server, and client |
+| `npm run dev` | Start development servers concurrently (Vite dev server + Express) |
+| `npm run server` | Start backend server only (with nodemon reload) |
+| `npm run client` | Start frontend Vite development server only |
+| `npm run seed` | Seed MongoDB with demo accounts, services, and counters |
+| `npm run generate-qr` | Generate local printable QR code files for LAN testing |
 
 ---
 
