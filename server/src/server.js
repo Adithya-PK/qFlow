@@ -1,5 +1,7 @@
 const express = require('express');
 const http = require('http');
+const path = require('path');
+const fs = require('fs');
 const { Server } = require('socket.io');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -59,19 +61,43 @@ app.use('/api/services', serviceRoutes);
 app.use('/api/queue', queueRoutes);
 app.use('/api/analytics', analyticsRoutes);
 
-app.get('/api/health', (_req, res) => {
+app.get('/api/health', (req, res) => {
   const lanIP = getLanIP();
+  const host = req.get('host');
+  const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+  const isProd = process.env.NODE_ENV === 'production';
+  const customerURL = process.env.CLIENT_URL
+    ? `${process.env.CLIENT_URL.replace(/\/+$/, '')}/customer`
+    : isProd
+      ? `${protocol}://${host}/customer`
+      : `http://${lanIP}:5173/customer`;
+
   res.json({
     status: 'OK',
     timestamp: new Date(),
     uptime: Math.floor(process.uptime()),
     environment: process.env.NODE_ENV || 'development',
     lanIP,
-    customerURL: `http://${lanIP}:5173/customer`,
+    customerURL,
   });
 });
 
-// Catch-all 404
+// Serve frontend build if present (unified full-stack deployment)
+const clientDistPath = path.resolve(__dirname, '../../client/dist');
+if (fs.existsSync(clientDistPath)) {
+  console.log(`[Static] Serving frontend from ${clientDistPath}`);
+  app.use(express.static(clientDistPath));
+
+  // SPA fallback for non-API client routes
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api') || req.path.startsWith('/socket.io')) {
+      return next();
+    }
+    res.sendFile(path.join(clientDistPath, 'index.html'));
+  });
+}
+
+// Catch-all 404 for unhandled API requests
 app.use((_req, res) => {
   res.status(404).json({ success: false, message: 'Route not found.' });
 });
@@ -93,8 +119,25 @@ async function connectDB() {
   
   try {
     // Attempt local/configured MongoDB connection with a short timeout
-    await mongoose.connect(MONGODB_URI, { serverSelectionTimeoutMS: 2000 });
-    return { mode: 'Local / Configured MongoDB (' + MONGODB_URI + ')' };
+    await mongoose.connect(MONGODB_URI, { serverSelectionTimeoutMS: 5000 });
+
+    // Auto-seed initial demo users and services if new database is empty
+    try {
+      const User = require('./models/User');
+      const userCount = await User.countDocuments();
+      if (userCount === 0) {
+        console.log('[MongoDB] Fresh database detected. Auto-seeding initial users, services, and counters...');
+        await seedDatabase();
+      }
+    } catch (seedCheckErr) {
+      console.warn('[MongoDB] Auto-seed check notice:', seedCheckErr.message);
+    }
+
+    const maskedURI = MONGODB_URI.includes('@')
+      ? MONGODB_URI.replace(/\/\/.*@/, '//*credentials*@')
+      : MONGODB_URI;
+
+    return { mode: 'Configured MongoDB (' + maskedURI + ')' };
   } catch (err) {
     console.log('[MongoDB] Local MongoDB server not found (' + err.message + ').');
     console.log('[MongoDB] Starting zero-config embedded MongoDB instance...');

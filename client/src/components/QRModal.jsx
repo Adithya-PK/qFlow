@@ -3,13 +3,17 @@ import { QRCodeCanvas } from 'qrcode.react';
 import { X, Download, Printer, ExternalLink, Wifi } from 'lucide-react';
 
 const getCustomerURL = () => {
+  if (typeof window === 'undefined') return '/customer';
   const hostname = window.location.hostname;
-  const port = window.location.port || '5173';
-  if (hostname === 'localhost' || hostname === '127.0.0.1') {
-    // Try to get LAN IP from the server
-    return `http://${hostname}:${port}/customer`;
+  const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.') || hostname.startsWith('10.') || hostname.startsWith('172.');
+  
+  if (!isLocal) {
+    // Cloud / Production deployment
+    return `${window.location.origin}/customer`;
   }
-  return `http://${hostname}:${port}/customer`;
+
+  const port = window.location.port ? `:${window.location.port}` : '';
+  return `${window.location.protocol}//${hostname}${port}/customer`;
 };
 
 const QRModal = ({ isOpen, onClose }) => {
@@ -18,20 +22,27 @@ const QRModal = ({ isOpen, onClose }) => {
 
   useEffect(() => {
     if (isOpen) {
-      // Fetch LAN IP from backend
+      const hostname = window.location.hostname;
+      const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+      const isLan = hostname.startsWith('192.168.') || hostname.startsWith('10.') || hostname.startsWith('172.');
+
+      if (!isLocalhost && !isLan) {
+        // Online cloud domain (Render, Railway, Vercel, etc.)
+        setCustomerURL(`${window.location.origin}/customer`);
+        setLanIP('Online (Public Cloud)');
+        return;
+      }
+
+      // Local development or LAN testing
       const fetchLanIP = async () => {
         try {
-          const hostname = window.location.hostname;
-          const backendPort = '5000';
-          const backendBase = hostname === 'localhost' || hostname === '127.0.0.1'
-            ? `http://localhost:${backendPort}`
-            : `http://${hostname}:${backendPort}`;
-          
-          const response = await fetch(`${backendBase}/api/health`);
+          const response = await fetch('/api/health');
           const data = await response.json();
-          if (data.lanIP) {
-            const url = `http://${data.lanIP}:5173/customer`;
-            setCustomerURL(url);
+          if (data.customerURL) {
+            setCustomerURL(data.customerURL);
+            setLanIP(data.lanIP || 'Connected');
+          } else if (data.lanIP && isLocalhost) {
+            setCustomerURL(`http://${data.lanIP}:5173/customer`);
             setLanIP(data.lanIP);
           } else {
             setCustomerURL(getCustomerURL());

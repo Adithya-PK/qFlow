@@ -3,12 +3,16 @@ import axios from 'axios';
 // When accessed from a phone on LAN, the proxy won't work (proxy only works on localhost).
 // So we need to detect if we're on localhost or a LAN IP and set the base URL accordingly.
 const getBaseURL = () => {
-  // Always use '/api' so Vite proxy seamlessly routes to backend on both desktop and mobile
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
   return '/api';
 };
 
 const getSocketURL = () => {
-  // Use same origin so Socket.IO connects through Vite proxy on port 5173
+  if (import.meta.env.VITE_SOCKET_URL) {
+    return import.meta.env.VITE_SOCKET_URL;
+  }
   if (typeof window !== 'undefined') {
     return window.location.origin;
   }
