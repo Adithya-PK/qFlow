@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "install-all": "npm install && npm install --prefix server && npm install --prefix client",
-    "build": "npm install --prefix server && npm install --prefix client && npm run --prefix client build",
+    "build": "npm install --include=dev --prefix server && npm install --include=dev --prefix client && npm run --prefix client build",
     "start": "node server/src/server.js",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "server": "npm run dev --prefix server",
